@@ -191,9 +191,51 @@ void build() {
             GP.SUBMIT("Сохранить");      
           GP.FORM_END();
         } else if (ui.uri("/ota_update")) {
-          GP.BUTTON_LINK("/", "Назад");
-          GP.OTA_FIRMWARE();
-          GP.OTA_FILESYSTEM();
+          M_GRID(
+            M_BLOCK_TAB(
+              "ОБНОВЛЕНИЕ",
+              GP.BUTTON_LINK("/", "Назад");
+              GP.BREAK();
+              GP.OTA_FIRMWARE("Обновить прошивку");
+              GP.BREAK();
+              GP.OTA_FILESYSTEM("Обновить файловую систему");
+              GP.BREAK();
+              GP.SEND("<div id='otaProgressWrap' style='display:none;margin-top:10px'>"
+                      "<div style='margin-bottom:6px'>Прогресс обновления: <span id='otaProgressText'>0%</span></div>"
+                      "<div style='width:100%;height:18px;border-radius:9px;background:#2a2d35;overflow:hidden'>"
+                      "<div id='otaProgressBar' style='height:100%;width:0%;background:#2ecc71;transition:width .15s ease'></div>"
+                      "</div></div>");
+              GP.JS_BEGIN();
+              GP.SEND("function gpBindOtaProgress(formId){"
+                      "var form=getEl(formId);if(!form||form.dataset.gpBound)return;"
+                      "form.dataset.gpBound='1';"
+                      "form.addEventListener('submit',function(e){"
+                        "e.preventDefault();"
+                        "var fileInput=form.querySelector('input[type=file]');"
+                        "if(!fileInput||!fileInput.files.length)return;"
+                        "var data=new FormData(form);"
+                        "var xhr=new XMLHttpRequest();"
+                        "var wrap=getEl('otaProgressWrap');"
+                        "var bar=getEl('otaProgressBar');"
+                        "var txt=getEl('otaProgressText');"
+                        "wrap.style.display='block';bar.style.width='0%';txt.textContent='0%';"
+                        "xhr.upload.onprogress=function(ev){"
+                          "if(ev.lengthComputable){"
+                            "var p=Math.round((ev.loaded/ev.total)*100);"
+                            "bar.style.width=p+'%';txt.textContent=p+'%';"
+                          "}"
+                        "};"
+                        "xhr.onload=function(){location.reload();};"
+                        "xhr.onerror=function(){alert('Ошибка загрузки файла');};"
+                        "xhr.open('POST',form.action,true);xhr.send(data);"
+                      "});"
+                    "}"
+                    "gpBindOtaProgress('firmware_form');"
+                    "gpBindOtaProgress('filesystem_form');"
+              );
+              GP.JS_END();
+            );
+          );
         }
             GP.UI_END();    // Конец меню
     }
