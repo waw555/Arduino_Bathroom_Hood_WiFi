@@ -73,11 +73,12 @@ bool operatingMode = false; //Режим работы измерения
 bool powerOnOff = false; //Включение/выключение устройства
 bool useLocalAddress = false;
 bool invertOut = false;
-int currentTemperature = 0; //Текущая температура
+int currentTemperature = -127; //Текущая температура
+bool sensorReadOk = false; // Успешно ли прочитаны значения датчика
 int maxTemperature = 0; //Максимальная температура
 int minTemperature = 0; //Минимальная температура
 int tempHysteresis = 0; //Гистерезис температуры
-int currentHumidity = 0;  //Текущая влажность
+int currentHumidity = -1;  //Текущая влажность
 int maxHumidity = 0;  //Максимальная влажность
 int minHumidity = 0;  //Минимальная влажность
 int humiHysteresis = 0; //Гистерезис влажности
@@ -97,6 +98,7 @@ void setup() {
   DEBUGLN("Start System");
 
   // Инициализация датчика температуры и влажности
+  pinMode(SENSOR_PIN, INPUT_PULLUP);
   dht.begin();
 
   // инициализация памяти
@@ -213,8 +215,8 @@ void loop() {
     // DHT на ESP8266 иногда возвращает NaN с первого раза,
     // поэтому делаем несколько попыток чтения.
     for (byte attempt = 0; attempt < 3; attempt++) {
-      newTemperature = dht.readTemperature();
-      newHumidity = dht.readHumidity();
+      newTemperature = dht.readTemperature(false, true);
+      newHumidity = dht.readHumidity(true);
 
       if (!isnan(newTemperature) && !isnan(newHumidity)) {
         break;
@@ -222,16 +224,13 @@ void loop() {
       delay(50);
     }
 
-    if (!isnan(newTemperature)) {
-      currentTemperature = (int)newTemperature;
-    } else {
-      DEBUGLN("DHT read error: temperature");
-    }
+    sensorReadOk = !isnan(newTemperature) && !isnan(newHumidity);
 
-    if (!isnan(newHumidity)) {
+    if (sensorReadOk) {
+      currentTemperature = (int)newTemperature;
       currentHumidity = (int)newHumidity;
     } else {
-      DEBUGLN("DHT read error: humidity");
+      DEBUGLN("DHT read error: check sensor wiring and power");
     }
     DEBUGLN();
     DEBUG("Temperature: ");
@@ -242,6 +241,11 @@ void loop() {
     DEBUG(statusFan);    
     DEBUGLN();
   } //if(millis() - readTime >= 10000)
+  // Если датчик пока не читается, не используем 0 как валидные данные для автоматики
+  if (!sensorReadOk && !manualMode) {
+    return;
+  }
+
   //Режим работы
   if (manualMode){  
     if(statusFan){
