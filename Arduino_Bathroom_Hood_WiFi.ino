@@ -73,12 +73,12 @@ bool operatingMode = false; //Режим работы измерения
 bool powerOnOff = false; //Включение/выключение устройства
 bool useLocalAddress = false;
 bool invertOut = false;
-int currentTemperature = -127; //Текущая температура
+int currentTemperature = 0; //Текущая температура
 bool sensorReadOk = false; // Успешно ли прочитаны значения датчика
 int maxTemperature = 0; //Максимальная температура
 int minTemperature = 0; //Минимальная температура
 int tempHysteresis = 0; //Гистерезис температуры
-int currentHumidity = -1;  //Текущая влажность
+int currentHumidity = 0;  //Текущая влажность
 int maxHumidity = 0;  //Максимальная влажность
 int minHumidity = 0;  //Минимальная влажность
 int humiHysteresis = 0; //Гистерезис влажности
@@ -214,7 +214,7 @@ void loop() {
 
     // DHT на ESP8266 иногда возвращает NaN с первого раза,
     // поэтому делаем несколько попыток чтения.
-    for (byte attempt = 0; attempt < 3; attempt++) {
+    for (byte attempt = 0; attempt < 5; attempt++) {
       newTemperature = dht.readTemperature();
       newHumidity = dht.readHumidity();
 
