@@ -194,7 +194,7 @@ void build() {
           M_GRID(
             M_BLOCK_TAB(
               "ОБНОВЛЕНИЕ",
-              GP.UI_LINK("/", "Назад");
+              GP.BUTTON_LINK("/", "Назад", GP_BLUE, "160px");
               GP.BREAK();
               GP.OTA_FIRMWARE("Обновить прошивку");
               GP.BREAK();
