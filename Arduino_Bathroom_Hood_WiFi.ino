@@ -206,8 +206,20 @@ void loop() {
 
   if(millis() - readTime >= 5000){
     readTime = millis();    
-    currentTemperature = dht.readTemperature();
-    currentHumidity = dht.readHumidity();
+    float newTemperature = dht.readTemperature();
+    float newHumidity = dht.readHumidity();
+
+    if (!isnan(newTemperature)) {
+      currentTemperature = (int)newTemperature;
+    } else {
+      DEBUGLN("DHT read error: temperature");
+    }
+
+    if (!isnan(newHumidity)) {
+      currentHumidity = (int)newHumidity;
+    } else {
+      DEBUGLN("DHT read error: humidity");
+    }
     DEBUGLN();
     DEBUG("Temperature: ");
     DEBUG(currentTemperature);
