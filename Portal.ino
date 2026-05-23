@@ -191,68 +191,9 @@ void build() {
             GP.SUBMIT("Сохранить");      
           GP.FORM_END();
         } else if (ui.uri("/ota_update")) {
-          GP.HTML("<a href=\"/\" style=\"display:inline-block;margin-bottom:12px;padding:8px 14px;background:#444;color:#fff;border-radius:6px;text-decoration:none;\">← Назад</a>");
+          GP.BUTTON_LINK("/", "Назад");
           GP.OTA_FIRMWARE();
           GP.OTA_FILESYSTEM();
-          GP.BREAK();
-          GP.LABEL("Прогресс загрузки");
-          GP.HTML("<progress id=\"otaProgress\" value=\"0\" max=\"100\" style=\"width:100%;display:none;\"></progress>");
-          GP.HTML("<div id=\"otaProgressText\" style=\"display:none;margin-top:8px;\">0%</div>");
-          GP.SCRIPT(R"(
-            (function() {
-              if (window.__otaProgressInit) return;
-              window.__otaProgressInit = true;
-
-              function initOtaProgress() {
-                var forms = document.querySelectorAll('form');
-                forms.forEach(function(form) {
-                  if (form.__otaHooked) return;
-                  if (!form.querySelector('input[type="file"]')) return;
-
-                  form.__otaHooked = true;
-                  form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    var progress = document.getElementById('otaProgress');
-                    var text = document.getElementById('otaProgressText');
-                    if (!progress || !text) return;
-
-                    progress.value = 0;
-                    progress.style.display = 'block';
-                    text.textContent = '0%';
-                    text.style.display = 'block';
-
-                    var xhr = new XMLHttpRequest();
-                    xhr.open(form.method || 'POST', form.action, true);
-
-                    xhr.upload.addEventListener('progress', function(event) {
-                      if (!event.lengthComputable) return;
-                      var percent = Math.round((event.loaded / event.total) * 100);
-                      progress.value = percent;
-                      text.textContent = percent + '%';
-                    });
-
-                    xhr.addEventListener('load', function() {
-                      progress.value = 100;
-                      text.textContent = '100%';
-                      if (xhr.status >= 200 && xhr.status < 400) {
-                        setTimeout(function() { location.reload(); }, 1500);
-                      }
-                    });
-
-                    xhr.addEventListener('error', function() {
-                      text.textContent = 'Ошибка загрузки';
-                    });
-
-                    xhr.send(new FormData(form));
-                  });
-                });
-              }
-
-              document.addEventListener('DOMContentLoaded', initOtaProgress);
-              initOtaProgress();
-            })();
-          )");
         }
             GP.UI_END();    // Конец меню
     }
