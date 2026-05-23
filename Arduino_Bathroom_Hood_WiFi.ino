@@ -215,8 +215,8 @@ void loop() {
     // DHT на ESP8266 иногда возвращает NaN с первого раза,
     // поэтому делаем несколько попыток чтения.
     for (byte attempt = 0; attempt < 3; attempt++) {
-      newTemperature = dht.readTemperature(false, true);
-      newHumidity = dht.readHumidity(true);
+      newTemperature = dht.readTemperature();
+      newHumidity = dht.readHumidity();
 
       if (!isnan(newTemperature) && !isnan(newHumidity)) {
         break;
