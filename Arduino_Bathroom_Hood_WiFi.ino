@@ -205,9 +205,22 @@ void loop() {
   static uint32_t readTime;
 
   if(millis() - readTime >= 5000){
-    readTime = millis();    
-    float newTemperature = dht.readTemperature();
-    float newHumidity = dht.readHumidity();
+    readTime = millis();
+
+    float newTemperature = NAN;
+    float newHumidity = NAN;
+
+    // DHT на ESP8266 иногда возвращает NaN с первого раза,
+    // поэтому делаем несколько попыток чтения.
+    for (byte attempt = 0; attempt < 3; attempt++) {
+      newTemperature = dht.readTemperature();
+      newHumidity = dht.readHumidity();
+
+      if (!isnan(newTemperature) && !isnan(newHumidity)) {
+        break;
+      }
+      delay(50);
+    }
 
     if (!isnan(newTemperature)) {
       currentTemperature = (int)newTemperature;
