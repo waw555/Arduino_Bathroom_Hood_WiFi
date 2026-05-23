@@ -31,9 +31,9 @@
 #define INIT_ADDR 500  // номер резервной ячейки для инициализации и первой проверки памяти
 #define INIT_KEY 51     // При любых изменениях в структурированных данных измените ключ  или стирайте память при прошивке.
 
-#define SENSOR_PIN 2 //Пин датчика температуры и влажности (GPIO0)
+#define SENSOR_PIN 2 //Пин датчика температуры и влажности (GPIO2)
 #define SENSOR_TYPE DHT11 //Тип датчика DHT11 или DHT22
-#define RELAY_PIN 0 //Пин реле (GPIO2) - меньше щелчков при старте
+#define RELAY_PIN 0 //Пин реле (GPIO0) - меньше щелчков при старте
 
 DHT dht(SENSOR_PIN, SENSOR_TYPE);
 GyverPortal ui(&LittleFS);
