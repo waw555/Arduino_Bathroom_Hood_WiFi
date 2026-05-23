@@ -31,9 +31,9 @@
 #define INIT_ADDR 500  // номер резервной ячейки для инициализации и первой проверки памяти
 #define INIT_KEY 50     // При любых изменениях в структурированных данных измените ключ  или стирайте память при прошивке.
 
-#define SENSOR_PIN 2 //Пин датчика температуры и влажности
+#define SENSOR_PIN 0 //Пин датчика температуры и влажности (GPIO0)
 #define SENSOR_TYPE DHT11 //Тип датчика DHT11 или DHT22
-#define RELAY_PIN 0 //Пин реле
+#define RELAY_PIN 2 //Пин реле (GPIO2) - меньше щелчков при старте
 
 DHT dht(SENSOR_PIN, SENSOR_TYPE);
 GyverPortal ui(&LittleFS);
@@ -82,6 +82,11 @@ int maxHumidity = 0;  //Максимальная влажность
 int minHumidity = 0;  //Минимальная влажность
 int humiHysteresis = 0; //Гистерезис влажности
 
+void setFanOutput(bool on) {
+  statusFan = on;
+  digitalWrite(RELAY_PIN, (invertOut ? !on : on) ? HIGH : LOW);
+}
+
 
 void setup() {
   delay(2000);
@@ -115,8 +120,10 @@ void setup() {
   operatingMode = data.operatingMode;
   invertOut = data.invertOut;
 
+  // Устанавливаем безопасный уровень ДО перевода пина в OUTPUT,
+  // чтобы уменьшить щелчок реле при старте.
+  digitalWrite(RELAY_PIN, invertOut ? HIGH : LOW);
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
   
   // пытаемся подключиться
   DEBUG("Connect to: ");
@@ -141,6 +148,10 @@ void setup() {
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
 
+  if (!LittleFS.begin()) {
+    DEBUGLN("FS Error");
+  }
+
   //Если подключились к точке доступа, то запускаем портал.
   ui.attachBuild(build);
   ui.attach(action);
@@ -156,10 +167,8 @@ void setup() {
     DEBUG("Portal Start");
     DEBUGLN(); 
   } 
-  ui.enableOTA();   // без пароля
+  ui.enableOTA();   // OTA обновление прошивки без пароля
   //ui.enableOTA("admin", "pass");  // с паролем
-
-  if (!LittleFS.begin()) DEBUGLN("FS Error");
   ui.downloadAuto(true);
 }
 /*******************Запускаем портал с формой для подключения к WiFi************************************/
@@ -211,86 +220,38 @@ void loop() {
   //Режим работы
   if (manualMode){  
     if(statusFan){
-      if(invertOut){
-        digitalWrite(RELAY_PIN, LOW); //Если значение температуры выше максимального уровня включаем реле.
-      }else{
-        digitalWrite(RELAY_PIN, HIGH); //Если значение температуры ниже минимального уровня включаем реле.
-      }  
+      setFanOutput(true);
     }else{
-      if(invertOut){
-        digitalWrite(RELAY_PIN, HIGH); //Если значение температуры выше максимального уровня включаем реле.
-      }else{
-        digitalWrite(RELAY_PIN, LOW); //Если значение температуры ниже минимального уровня включаем реле.
-      }    
+      setFanOutput(false);
     } //if(statusFan)
   }else{
     if(operatingMode) {
       if(data.tempOn <= data.tempOff){
         if(currentTemperature <= data.tempOn - data.tempHyst){
-          if(invertOut){
-            digitalWrite(RELAY_PIN, LOW); //Если значение температуры выше максимального уровня включаем реле.
-          }else{
-            digitalWrite(RELAY_PIN, HIGH); //Если значение температуры ниже минимального уровня включаем реле.
-          } 
-          statusFan = true; 
+          setFanOutput(true);
         }else if(currentTemperature >= data.tempOff + data.tempHyst){
-          if(invertOut){
-            digitalWrite(RELAY_PIN, HIGH); //Если значение температуры выше максимального уровня включаем реле.
-          }else{
-            digitalWrite(RELAY_PIN, LOW); //Если значение температуры ниже минимального уровня включаем реле.
-          } 
-          statusFan = false;          
+          setFanOutput(false);          
         }
       }else{
         if(currentTemperature >= data.tempOn + data.tempHyst){
-          if(invertOut){
-            digitalWrite(RELAY_PIN, LOW); //Если значение температуры выше максимального уровня включаем реле.
-          }else{
-            digitalWrite(RELAY_PIN, HIGH); //Если значение температуры ниже минимального уровня включаем реле.
-          }
-          statusFan = true;
+          setFanOutput(true);
         }else if (currentTemperature <= data.tempOff - data.tempHyst){
-          if(invertOut){
-            digitalWrite(RELAY_PIN, HIGH); //Если значение температуры выше максимального уровня включаем реле.
-          }else{
-            digitalWrite(RELAY_PIN, LOW); //Если значение температуры ниже минимального уровня включаем реле.
-          } 
-          statusFan = false; 
+          setFanOutput(false); 
         }
       } 
     }else{
         if(data.humiOn > data.humiOff){
             if(currentHumidity >= data.humiOn + data.humiHyst){
-              if(invertOut){
-                digitalWrite(RELAY_PIN, LOW); //Если значение температуры выше максимального уровня включаем реле.
-              }else{
-                digitalWrite(RELAY_PIN, HIGH); //Если значение температуры ниже минимального уровня включаем реле.
-              }
-              statusFan = true;
+              setFanOutput(true);
             }      
             if(currentHumidity <= data.humiOff - data.humiHyst) {
-              if(invertOut){
-                digitalWrite(RELAY_PIN, HIGH); //Если значение температуры выше максимального уровня включаем реле.
-              }else{
-                digitalWrite(RELAY_PIN, LOW); //Если значение температуры ниже минимального уровня включаем реле.
-              } 
-              statusFan = false;
+              setFanOutput(false);
             }
         }else{
             if(currentHumidity <= data.humiOn - data.humiHyst || currentHumidity >= data.humiOff + data.humiHyst){
-              if(invertOut){
-                digitalWrite(RELAY_PIN, LOW); //Если значение температуры выше максимального уровня включаем реле.
-              }else{
-                digitalWrite(RELAY_PIN, HIGH); //Если значение температуры ниже минимального уровня включаем реле.
-              }
-              statusFan = true;
+              setFanOutput(true);
             }else{ 
-              if(invertOut){
-                digitalWrite(RELAY_PIN, HIGH); //Если значение температуры выше максимального уровня включаем реле.
-              }else{
-                digitalWrite(RELAY_PIN, LOW); //Если значение температуры ниже минимального уровня включаем реле.
-              } 
-              statusFan = false;
+              setFanOutput(false);
             }          
         }
     }
