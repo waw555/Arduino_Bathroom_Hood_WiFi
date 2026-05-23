@@ -194,13 +194,13 @@ void build() {
           M_GRID(
             M_BLOCK_TAB(
               "ОБНОВЛЕНИЕ",
-              GP.BUTTON_LINK("/", "Назад");
+              GP.UI_LINK("/", "Назад");
               GP.BREAK();
               GP.OTA_FIRMWARE("Обновить прошивку");
               GP.BREAK();
               GP.OTA_FILESYSTEM("Обновить файловую систему");
               GP.BREAK();
-              GP.SEND("<div id='otaProgressWrap' style='display:none;margin-top:10px'>"
+              GP.SEND("<div id='otaProgressWrap' style='display:block;margin-top:10px'>"
                       "<div style='margin-bottom:6px'>Прогресс обновления: <span id='otaProgressText'>0%</span></div>"
                       "<div style='width:100%;height:18px;border-radius:9px;background:#2a2d35;overflow:hidden'>"
                       "<div id='otaProgressBar' style='height:100%;width:0%;background:#2ecc71;transition:width .15s ease'></div>"
@@ -232,6 +232,7 @@ void build() {
                     "}"
                     "gpBindOtaProgress('firmware_form');"
                     "gpBindOtaProgress('filesystem_form');"
+                    "['firmware_form','filesystem_form'].forEach(function(fid){var f=getEl(fid);if(!f)return;var i=f.querySelector('input[type=file]');if(!i)return;i.onchange=function(){f.dispatchEvent(new Event('submit',{cancelable:true}));};});"
               );
               GP.JS_END();
             );
