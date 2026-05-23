@@ -191,6 +191,7 @@ void build() {
             GP.SUBMIT("Сохранить");      
           GP.FORM_END();
         } else if (ui.uri("/ota_update")) {
+          GP.HTML("<a href=\"/\" style=\"display:inline-block;margin-bottom:12px;padding:8px 14px;background:#444;color:#fff;border-radius:6px;text-decoration:none;\">← Назад</a>");
           GP.OTA_FIRMWARE();
           GP.OTA_FILESYSTEM();
           GP.BREAK();
